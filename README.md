@@ -55,7 +55,7 @@ console.log(solveQP(Dmat, dvec, Amat, bvec));
 
 # Dependencies
 
-The package does not use any dependencies and is implemented without using of classes, methods and additional packages/functions. 
+The package does not use any dependencies and is implemented without using of classes, methods and additional packages/functions. This pattern implementation was preferred because of the simplicity and time efficiency, which is crucial for this class of algorithms. 
 
 # Technical details
 
