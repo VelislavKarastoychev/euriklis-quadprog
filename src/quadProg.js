@@ -819,6 +819,54 @@ function qpgen2(dmat, dvec, n, amat, bvec, q, meq, ierr = 0) {
     } while (1);
     return solutionQP(ierr, sol, crval, dvec, iter, iact, nact, lagr);
 }
+/**
+ * 
+ * @param {Array.<Array.<number>>} D - a squared matrix with dimensions n x n. 
+ * @param {Array.<number>} d - a vector with dimensions n x 1.
+ * @param {Array.<Array.<number>>} A - a rectangular matrix with dimensions q x n.
+ * @param {Array.<number>} b - a vector with dimensions q x 1.
+ * @param {number?} meq - number of the equality constraints.
+ * By default this parameter is set to zero.
+ * @param {0 | 1 | 2?} ierr - an integer, when is zero comutes the 
+ * inverse of the D matrix and make factorizations, otherwise assumes that
+ * the inverse matrix is alredy computed in D. By default this parameter is set to 0.
+ * @returns {{
+ * solution : Array.<number>,
+ value : number,
+ unconstrained_solution : Array.<number>,
+ iterations : [number, number],
+ message : string,
+ 'active constraints': Array.<number>,
+ 'count of active constraints': number,
+ 'Lagrangian multipliers': Array.<number>
+ * }}
+ *@description
+ *This program is free software; you can redistribute it and / or modify it
+ * under the terms of the GNU General Public License as published
+ * by the Free Software Foundation; either version 2 of the License,
+ * or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ * This routine uses the Goldfarb/Idnani algorithm to solve the
+ * following minimization problem:
+ * 
+ * minimize:
+ *            -d^T x + 1/2 * x^T D x,
+ *       s.t.:
+ *             A1^T x = b1
+ *             A2^T x >= b2
+ * where the matrix D is assumed to be positive definite.
+ * Especially, without losing of generality D is assumed 
+ * to be symmetric.
+ * 
+ * If the matrix D is not symmetric, then set it to the
+ * matrix D := 1/2 (D + D^T) and then inside it in the subroutine.
+ */
 function quadprog(D, d, A, b, meq = 0, ierr = 0) {
     // fast deep copy of the elements
     let _A = [], _b = [], _d = [],
