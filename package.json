@@ -1,0 +1,31 @@
+{
+  "name": "@euriklis/quadprog",
+  "version": "1.0.0",
+  "description": "A javascript implementation of the quadprog Fortran subroutine.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VelislavKarastoychev/euriklis-quadprog.git"
+  },
+  "keywords": [
+    "quadprog",
+    "solveQP",
+    "quadratic programming",
+    "Mathematical programming",
+    "optimization",
+    "dual algorithm for quadratic programming",
+    "qpgen2",
+    "dpofa",
+    "dposl",
+    "dpori"
+  ],
+  "author": "Euriklis <euriklis@hotmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/VelislavKarastoychev/euriklis-quadprog/issues"
+  },
+  "homepage": "https://github.com/VelislavKarastoychev/euriklis-quadprog#readme"
+}
