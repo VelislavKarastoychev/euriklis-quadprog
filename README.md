@@ -14,7 +14,7 @@ npm install @euriklis/quadprog@latest --save
 To use the package you have to declare the package with the conventional require approach:
 
 ```js
-const solveQP = require('@euriklis/quadprog');
+import { solveQP } from '@euriklis/quadprog';
 let Dmat = [], dvec = [], Amat = [], bvec = [], res;
 
 Dmat[0] = [];
