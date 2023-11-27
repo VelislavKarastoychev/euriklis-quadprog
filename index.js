@@ -1,2 +1,2 @@
-'use strict';
-export {solveQP} from './src/quadProg.js';
+"use strict";
+export { quadprog as solveQP } from './src/quadProg.js'
