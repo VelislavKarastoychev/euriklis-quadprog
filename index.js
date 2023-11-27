@@ -1,3 +1,2 @@
 'use strict';
-const solveQP = require('./src/quadProg');
-module.exports = solveQP;
+export {solveQP} from './src/quadProg.js';
