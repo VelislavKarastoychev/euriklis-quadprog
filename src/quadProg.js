@@ -21,7 +21,7 @@
  * We avoid these routines by implementing them in the
  * javascript.
  */
-function dpori(a, n) {
+const dpori = (a, n) => {
   let i, j, k, kp1, t;
   // compute inverse(r)
   for (k = 0; k < n; k++) {
@@ -43,7 +43,7 @@ function dpori(a, n) {
   }
   return a;
 }
-function dpofa(a) {
+const dpofa = (a) => {
   let i, j, jm1, k, t, s, n, info = [];
   n = a.length;
   for (j = 0; j < n; j++) {
@@ -95,7 +95,7 @@ function dpofa(a) {
  * We avoid the ddot and daxpy methods of the fortran and change them
  * with the corresponded javascript implementations.
  */
-function dposl(a, n, b) {
+const dposl = (a, n, b) => {
   let i, k, kb, t;
   for (k = 0; k < n; k++) {
     //~ t = ddot(k - 1, a[1][k], 1, b[1], 1);
@@ -128,7 +128,7 @@ function dposl(a, n, b) {
  * @param {number[]} lagr - the lagrangian multipliers of the
  * quadratic form.
  */
-function solutionQP(
+const solutionQP = (
   error_index,
   solution,
   value,
@@ -137,7 +137,7 @@ function solutionQP(
   iact,
   nact,
   lagr,
-) {
+) => {
   let message = "";
   if (error_index === 1) message = "Constraints are inconsistent. No solution.";
   if (error_index === 2) {
@@ -241,7 +241,7 @@ function solutionQP(
  * - If the matrix D is not symmetric, then set it to the
  * matrix D := 1/2 (D + D^T) and then inside it in the subroutine.
  */
-function qpgen2(dmat, dvec, n, amat, bvec, q, meq, ierr = 0) {
+const qpgen2 = (dmat, dvec, n, amat, bvec, q, meq, ierr = 0) => {
   /**
    * @param {number} fddmat - an integer,
    * the leading dimension of the matrix dmat.
@@ -886,7 +886,7 @@ function qpgen2(dmat, dvec, n, amat, bvec, q, meq, ierr = 0) {
  * If the matrix D is not symmetric, then set it to the
  * matrix D := 1/2 (D + D^T) and then inside it in the subroutine.
  */
-export function quadprog(D, d, A, b, meq = 0, ierr = 0) {
+export const quadprog = (D, d, A, b, meq = 0, ierr = 0) => {
   // fast deep copy of the elements
   let _A = [],
     _b = [],
