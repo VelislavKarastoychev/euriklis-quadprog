@@ -1,11 +1,14 @@
 {
   "name": "@euriklis/quadprog",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "A javascript implementation of the quadprog Fortran subroutine.",
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "benchmark": "node benchmark/compare.js",
+    "benchmark:node": "node benchmark/benchmark.js",
+    "benchmark:bun": "bun benchmark/benchmark.js"
   },
   "repository": {
     "type": "git",
@@ -14,10 +17,16 @@
   "keywords": [
     "quadprog",
     "solveQP",
+    "solveQPFast",
     "quadratic programming",
     "Mathematical programming",
     "optimization",
     "dual algorithm for quadratic programming",
+    "Goldfarb-Idnani",
+    "active set method",
+    "parallel",
+    "SharedArrayBuffer",
+    "SVM",
     "qpgen2",
     "dpofa",
     "dposl",
@@ -28,5 +37,8 @@
   "bugs": {
     "url": "https://github.com/VelislavKarastoychev/euriklis-quadprog/issues"
   },
-  "homepage": "https://github.com/VelislavKarastoychev/euriklis-quadprog#readme"
+  "homepage": "https://github.com/VelislavKarastoychev/euriklis-quadprog#readme",
+  "devDependencies": {
+    "quadprog": "^1.6.1"
+  }
 }

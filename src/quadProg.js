@@ -241,7 +241,7 @@ const solutionQP = (
  * - If the matrix D is not symmetric, then set it to the
  * matrix D := 1/2 (D + D^T) and then inside it in the subroutine.
  */
-const qpgen2 = (dmat, dvec, n, amat, bvec, q, meq, ierr = 0) => {
+export const qpgen2 = (dmat, dvec, n, amat, bvec, q, meq, ierr = 0) => {
   /**
    * @param {number} fddmat - an integer,
    * the leading dimension of the matrix dmat.
@@ -484,7 +484,9 @@ const qpgen2 = (dmat, dvec, n, amat, bvec, q, meq, ierr = 0) => {
        * i.e., the minimum. By obvious connecting and unconnectiong
        * take always the first constraint which is violated.
        */
-      nvl = 0;
+      // −1 sentinel for "no violated constraint" (0 collides with constraint
+      // index 0 → in the 1-based original, constraint 0 could never activate).
+      nvl = -1;
       temp = 0.0;
       for (i = 0; i < q; i++) {
         if (work[iwsv + i] < temp * work[iwnbv + i]) {
@@ -492,7 +494,7 @@ const qpgen2 = (dmat, dvec, n, amat, bvec, q, meq, ierr = 0) => {
           temp = work[iwsv + i] / work[iwnbv + i];
         }
       }
-      if (nvl === 0) {
+      if (nvl === -1) {
         for (i = 0; i < nact; i++) {
           lagr[iact[i]] = work[iwuv + i];
         }
@@ -530,15 +532,19 @@ const qpgen2 = (dmat, dvec, n, amat, bvec, q, meq, ierr = 0) => {
       t1inf = true;
       for (i = nact - 1; i >= 0; i--) {
         sum = work[i];
-        l = (iwrm + 0.5 * (i * (i + 3))) >> 0;
-        l1 = l - i;
+        // 0-based packed upper-triangular R: the diagonal R[i][i] is at
+        // iwrm + i*(i+3)/2; R[i][i+1] sits i+1 past it; the step from R[i][j]
+        // to R[i][j+1] is (j+1). (The 1-based source reused these offsets
+        // verbatim, which mis-indexes R and corrupts the multipliers.)
+        l1 = (iwrm + 0.5 * (i * (i + 3))) >> 0;
+        l = l1 + i + 1;
         for (j = i + 1; j < nact; j++) {
           sum -= work[l] * work[iwrv + j];
-          l += j;
+          l += j + 1;
         }
         sum /= work[l1];
         work[iwrv + i] = sum;
-        if (iact[i] <= meq) continue;
+        if (iact[i] < meq) continue;
         if (sum <= 0) continue;
         t1inf = false;
         it1 = i;
@@ -552,7 +558,7 @@ const qpgen2 = (dmat, dvec, n, amat, bvec, q, meq, ierr = 0) => {
       if (!t1inf) {
         t1 = work[iwuv + it1] / work[iwrv + it1];
         for (i = 0; i < nact; i++) {
-          if (iact[i] <= meq) continue;
+          if (iact[i] < meq) continue;
           if (work[iwrv + i] <= 0.0) continue;
           temp = work[iwuv + i] / work[iwrv + i];
           if (temp < t1) {
@@ -723,7 +729,7 @@ const qpgen2 = (dmat, dvec, n, amat, bvec, q, meq, ierr = 0) => {
           for (j = 0; j < n; j++) {
             sum += sol[j] * amat[j][nvl];
           }
-          if (nvl >= meq - 1) {
+          if (nvl >= meq) {
             work[iwsv + nvl] = sum;
           } else {
             work[iwsv + nvl] = -abs(sum);
@@ -748,7 +754,7 @@ const qpgen2 = (dmat, dvec, n, amat, bvec, q, meq, ierr = 0) => {
        * if it1 = nact it is only neccessary to
        * update the vector u and nact.
        */
-      while (it1 < nact) {
+      while (it1 < nact - 1) {
         /**
          * After updation one row of R (column of J)
          * we will also come back here.
@@ -784,7 +790,7 @@ const qpgen2 = (dmat, dvec, n, amat, bvec, q, meq, ierr = 0) => {
                 temp = work[l1 - 1];
                 work[l1 - 1] = work[l1];
                 work[l1] = temp;
-                l1 += i;
+                l1 += i + 1;
               }
               for (i = 0; i < n; i++) {
                 temp = dmat[i][it1];
@@ -797,7 +803,7 @@ const qpgen2 = (dmat, dvec, n, amat, bvec, q, meq, ierr = 0) => {
                 temp = gc * work[l1 - 1] + gs * work[l1];
                 work[l1] = nu * (work[l1 - 1] + temp) - work[l1];
                 work[l1 - 1] = temp;
-                l1 += i;
+                l1 += i + 1;
               }
               for (i = 0; i < n; i++) {
                 temp = gc * dmat[i][it1] + gs * dmat[i][it1 + 1];
@@ -887,65 +893,17 @@ const qpgen2 = (dmat, dvec, n, amat, bvec, q, meq, ierr = 0) => {
  * matrix D := 1/2 (D + D^T) and then inside it in the subroutine.
  */
 export const quadprog = (D, d, A, b, meq = 0, ierr = 0) => {
-  // fast deep copy of the elements
-  let _A = [],
-    _b = [],
-    _d = [],
-    _D = [],
-    _ierr = ierr,
-    i,
-    j,
-    n = D.length,
-    q = A.length;
-  for (i = 0; i < n >> 1; i++) {
-    _d[i << 1] = d[i << 1];
-    _d[(i << 1) + 1] = d[(i << 1) + 1];
-    _D[i << 1] = [];
-    _D[(i << 1) + 1] = [];
-    for (j = 0; j < n >> 1; j++) {
-      _D[i << 1][j << 1] = D[i << 1][j << 1];
-      _D[i << 1][(j << 1) + 1] = D[i << 1][(j << 1) + 1];
-      _D[(i << 1) + 1][j << 1] = D[(i << 1) + 1][j << 1];
-      _D[(i << 1) + 1][(j << 1) + 1] = D[(i << 1) + 1][(j << 1) + 1];
-    }
-    if (n & 1) {
-      _D[i << 1][n - 1] = D[i << 1][n - 1];
-      _D[(i << 1) + 1][n - 1] = D[(i << 1) + 1][n - 1];
-    }
-  }
-  if (n & 1) {
-    _d[n - 1] = d[n - 1];
-    _D[n - 1] = [];
-    for (i = 0; i < n >> 1; i++) {
-      _D[n - 1][i << 1] = D[n - 1][i << 1];
-      _D[n - 1][(i << 1) + 1] = D[n - 1][(i << 1) + 1];
-    }
-    _D[n - 1][n - 1] = D[n - 1][n - 1];
-  }
-  for (i = 0; i < q >> 1; i++) {
-    _b[i << 1] = b[i << 1];
-    _b[(i << 1) + 1] = b[(i << 1) + 1];
-    _A[i << 1] = [];
-    _A[(i << 1) + 1] = [];
-    for (j = 0; j < n >> 1; j++) {
-      _A[i << 1][j << 1] = A[i << 1][j << 1];
-      _A[i << 1][(j << 1) + 1] = A[i << 1][(j << 1) + 1];
-      _A[(i << 1) + 1][j << 1] = A[(i << 1) + 1][j << 1];
-      _A[(i << 1) + 1][(j << 1) + 1] = A[(i << 1) + 1][(j << 1) + 1];
-    }
-    if (n & 1) {
-      _A[i << 1][n - 1] = A[i << 1][n - 1];
-      _A[(i << 1) + 1][n - 1] = A[(i << 1) + 1][n - 1];
-    }
-  }
-  if (q & 1) {
-    _b[q - 1] = b[q - 1];
-    _A[q - 1] = [];
-    for (i = 0; i < n >> 1; i++) {
-      _A[q - 1][i << 1] = A[q - 1][i << 1];
-      _A[q - 1][(i << 1) + 1] = A[q - 1][(i << 1) + 1];
-    }
-    if (n & 1) _A[q - 1][n - 1] = A[q - 1][n - 1];
-  }
-  return qpgen2(_D, _d, n, _A, _b, q, meq, _ierr);
+  // D is n×n (SPD); A is n×q — COLUMN i is the normal of constraint i, so q is
+  // the number of COLUMNS (A[0].length), not A.length. (The previous wrapper read
+  // q = A.length and copied A as q×n, which only happens to agree with qpgen2's
+  // amat[variable][constraint] access for SQUARE A — non-square problems, e.g. a
+  // budget-plus-bounds portfolio (n×(n+1)), came out wrong.) qpgen2 destroys its
+  // inputs in place, so deep-copy first.
+  const n = D.length;
+  const q = A[0].length;
+  const _D = D.map((row) => row.slice());
+  const _d = d.slice();
+  const _A = A.map((row) => row.slice());
+  const _b = b.slice();
+  return qpgen2(_D, _d, n, _A, _b, q, meq, ierr);
 }
