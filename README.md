@@ -101,6 +101,11 @@ This section explains *why* the method works. It assumes you are comfortable
 with positive‑definite matrices, the Cholesky factorisation, QR / Givens
 rotations, and Lagrange multipliers.
 
+> New to the **[active set](./docs/concepts.md#the-active-set)** or the **[dual
+> problem](./docs/concepts.md#the-dual-problem)**? Both get a plain‑language,
+> picture‑first primer in [`docs/concepts.md`](./docs/concepts.md) — read that
+> first if either term is unfamiliar.
+
 ### 1. The problem is a single point
 
 Write the objective `f(x) = ½ xᵀ D x − dᵀ x`. Because `D` is symmetric
@@ -137,7 +142,7 @@ A feasible `x*` is the optimum **iff** there exist multipliers `λᵢ ≥ 0` suc
 
 Because the problem is convex, these conditions are not just necessary but
 **sufficient**. So the whole job is: find the set of constraints that are tight
-at the optimum — the **active set** `𝒜` — together with multipliers `λ ≥ 0`
+at the optimum — the **[active set](./docs/concepts.md#the-active-set)** `𝒜` — together with multipliers `λ ≥ 0`
 that balance the gradient. Once `𝒜` is known the solution is pure linear
 algebra: minimise `f` subject to `aᵢᵀx = bᵢ` for `i ∈ 𝒜`.
 
@@ -147,7 +152,7 @@ A **primal** active‑set method keeps `x` feasible and walks along the boundary
 swapping constraints in and out until the multipliers come out non‑negative. It
 needs a feasible starting point, which itself costs a solve.
 
-Goldfarb and Idnani turn this around. The **dual** method keeps the *multiplier*
+Goldfarb and Idnani turn this around. The **[dual](./docs/concepts.md#the-dual-problem)** method keeps the *multiplier*
 side healthy (`λ ≥ 0`) and works towards feasibility:
 
 > Start at the unconstrained minimum `x⁰ = D⁻¹d` with an empty active set
