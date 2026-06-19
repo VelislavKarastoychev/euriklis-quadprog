@@ -273,26 +273,39 @@ machine precision (`≈ 10⁻¹⁵`). `solveQPFast` is checked the same way for
 
 ## Performance
 
-Reproduce with `node benchmark/compare.js` — it runs the benchmark under **both
-Node and Bun** and prints a combined table for all three solvers (Santini's
-reference `quadprog`, this package's `solveQP`, and `solveQPFast`), then reports
-the CPU it ran on. Run a single runtime with `node benchmark/benchmark.js` (or
-`bun …`).
+All numbers are on an **AMD Ryzen 9 4900HS (16 threads)**, Node v20.19 / Bun
+1.2.23, median ms; reproduce with the scripts in [`benchmark/`](./benchmark).
 
-Below is one such run on an **AMD Ryzen 9 4900HS (16 threads)**, Node v20.19 /
-Bun 1.2.23, on dense problems with `n` box constraints — median solve time in ms,
-lower is better:
+**How `solveQP` compares to Santini depends on the problem.** Both share the same
+`O(n³)` factorisation but differ in the `O(n²)`‑per‑iteration active‑set loop, so
+the picture splits in two:
 
-|   n  | Node Santini | Node solveQP | Node **Fast** | Bun Santini | Bun solveQP | Bun **Fast** |
-|---:|---:|---:|---:|---:|---:|---:|
-| 200 | 7.0 | 5.7 | 5.9 | 8.5 | 8.9 | 8.6 |
-| 400 | 55 | 52 | 49 | 71 | 75 | 77 |
-| 600 | 174 | 185 | **131** | 293 | 281 | **98** |
-| 800 | 506 | 412 | **252** | 876 | 927 | **180** |
-| 1024 | 1132 | 1131 | **523** | 1458 | 1581 | **326** |
+**(a) Constraint‑heavy problems** — many inequalities ⇒ many iterations ⇒ the
+loop dominates, and the dense 0‑indexed, goto‑free layout pulls ahead
+(`node benchmark/constraints.js`, `q = 2n` dense random):
 
-`solveQPFast` vs. `solveQP` (it delegates to `solveQP` below `n = 512`, so the
-speed‑up is ≈ 1× there and only the larger sizes engage the worker pool):
+| n | iterations | Santini | solveQP | **solveQP is** |
+|---:|---:|---:|---:|---:|
+| 60 | 72 | 10.2 | 4.4 | **2.3× faster** |
+| 100 | 125 | 50.9 | 13.4 | **3.8× faster** |
+| 150 | 189 | 179 | 49 | **3.7× faster** |
+| 200 | 297 | 555 | 149 | **3.7× faster** |
+
+**(b) Factorisation‑dominated problems** — few active constraints ⇒ ≈ 1
+iteration ⇒ the time is almost entirely the Cholesky and triangular inverse,
+which is the *same* work in both, so the two are **on par**
+(`node benchmark/benchmark.js`, `n` box constraints):
+
+| n | Santini | solveQP |
+|---:|---:|---:|
+| 200 | 5.5 | 5.5 |
+| 400 | 50 | 49 |
+| 800 | 507 | 412 |
+| 1024 | 1178 | 1116 |
+
+Regime (b) is exactly where **`solveQPFast`** helps: it runs that factorisation
+on the worker pool. Same box problems, `solveQPFast` vs `solveQP` (identical
+results; below `n = 512` it just calls `solveQP`, hence ≈ 1× there):
 
 | n | Node | Bun |
 |---:|---:|---:|
@@ -300,9 +313,7 @@ speed‑up is ≈ 1× there and only the larger sizes engage the worker pool):
 | 800 | 1.6× | 5.2× |
 | 1024 | 2.2× | 4.8× |
 
-On problems with many more constraints than variables (e.g. `q ≈ 2n`),
-`solveQP`'s dense 0‑indexed layout and goto‑free control flow alone make it
-≈ 2–3× faster than Santini's reference, even without the worker pool.
+Run `node benchmark/compare.js` for the full Node‑vs‑Bun, three‑solver table.
 
 ---
 

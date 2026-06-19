@@ -8,7 +8,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "benchmark": "node benchmark/compare.js",
     "benchmark:node": "node benchmark/benchmark.js",
-    "benchmark:bun": "bun benchmark/benchmark.js"
+    "benchmark:bun": "bun benchmark/benchmark.js",
+    "benchmark:constraints": "node benchmark/constraints.js"
   },
   "repository": {
     "type": "git",
