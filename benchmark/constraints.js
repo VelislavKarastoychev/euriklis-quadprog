@@ -1,17 +1,21 @@
 "use strict";
 
 /**
- * solveQP vs. Santini on CONSTRAINT‑HEAVY problems (q = 2n dense random
+ * All three solvers on CONSTRAINT‑HEAVY problems (q = 2n dense random
  * inequalities). These take many active‑set iterations, so the per‑iteration
  * cost dominates — which is exactly where this package's dense, goto‑free inner
- * loop pulls ahead. (On factorisation‑dominated problems — few active
- * constraints, the time spent almost entirely in the Cholesky / inverse — the
- * two are on par; see benchmark.js.)
+ * loop pulls ahead of Santini's reference. (On factorisation‑dominated problems
+ * — few active constraints — the two are on par; see benchmark.js.)
+ *
+ * solveQPFast parallelises only the O(n³) start‑up, NOT the iteration loop. In
+ * this regime the loop is the bottleneck, so Fast gives essentially no benefit
+ * here — and below n=512 it simply calls solveQP. Its win is on
+ * factorisation‑dominated problems (benchmark.js / compare.js).
  *
  *   node benchmark/constraints.js   (or:  bun …)
  */
 import os from "os";
-import { solveQP } from "../index.js";
+import { solveQP, solveQPFast } from "../index.js";
 
 let santini = null;
 try { const m = await import("quadprog"); santini = m.solveQP ?? m.default?.solveQP ?? m.default ?? null; } catch {}
@@ -26,7 +30,7 @@ const rnd = () => { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fff
 const M1 = (r) => { const m = [[]]; r.forEach((x, i) => (m[i + 1] = [0, ...x])); return m; };
 const V1 = (a) => [0, ...a];
 const cM = (m) => m.map((r) => r.slice());
-const med = (fn, reps) => { const t = []; for (let i = 0; i < reps; i++) { const a = now(); fn(); t.push(now() - a); } t.sort((x, y) => x - y); return t[reps >> 1]; };
+const med = async (fn, reps) => { const t = []; for (let i = 0; i < reps; i++) { const a = now(); await fn(); t.push(now() - a); } t.sort((x, y) => x - y); return t[reps >> 1]; };
 
 function gen(n, seed) {
   s = seed;
@@ -40,19 +44,22 @@ function gen(n, seed) {
 }
 
 console.log(`\nCPU: ${CPU}   Runtime: ${RUNTIME}`);
-console.log("Constraint‑heavy QP (q = 2n dense random) — median ms\n");
-console.log("    n │   q  │ iters │  Santini    solveQP │  solveQP is");
-console.log("──────┼──────┼───────┼─────────────────────┼────────────");
-for (const n of [30, 60, 100, 150, 200]) {
+console.log("Constraint‑heavy QP (q = 2n dense random) — median ms, lower is better\n");
+console.log("    n │   q  │ iters │  Santini    solveQP       Fast │  solveQP vs Santini");
+console.log("──────┼──────┼───────┼──────────────────────────────┼─────────────────────");
+for (const n of [60, 100, 200, 400]) {
   const p = gen(n, 7);
   const D1 = M1(p.D), d1 = V1(p.d), A1 = M1(p.A), b1 = V1(p.b);
   const iters = solveQP(p.D, p.d, p.A, p.b).iterations[0];
-  for (let w = 0; w < 3; w++) { solveQP(p.D, p.d, p.A, p.b); santini(cM(D1), d1.slice(), cM(A1), b1.slice()); }
-  const reps = 9;
-  const mine = med(() => solveQP(p.D, p.d, p.A, p.b), reps);
-  const sant = med(() => santini(cM(D1), d1.slice(), cM(A1), b1.slice()), reps);
-  const verdict = sant > mine ? `${(sant / mine).toFixed(2)}× faster` : `${(mine / sant).toFixed(2)}× slower`;
-  console.log(`${String(n).padStart(5)} │${String(2 * n).padStart(5)} │${String(iters).padStart(6)} │${sant.toFixed(2).padStart(9)}${mine.toFixed(2).padStart(11)} │  ${verdict}`);
+  const reps = n <= 100 ? 9 : n <= 200 ? 6 : 4;
+  for (let w = 0; w < 2; w++) { solveQP(p.D, p.d, p.A, p.b); await solveQPFast(p.D, p.d, p.A, p.b); santini(cM(D1), d1.slice(), cM(A1), b1.slice()); }
+  const mine = await med(() => { solveQP(p.D, p.d, p.A, p.b); }, reps);
+  const fast = await med(() => solveQPFast(p.D, p.d, p.A, p.b), reps);
+  const sant = await med(() => { santini(cM(D1), d1.slice(), cM(A1), b1.slice()); }, reps);
+  const f = (v) => v.toFixed(1).padStart(10);
+  console.log(`${String(n).padStart(5)} │${String(2 * n).padStart(5)} │${String(iters).padStart(6)} │${f(sant)}${f(mine)}${f(fast)} │  ${((sant / mine).toFixed(2) + "× faster").padStart(13)}`);
 }
-console.log("");
+console.log("\nFast ≈ solveQP here: it parallelises the factorisation, but a constraint‑heavy");
+console.log("solve is dominated by the (sequential) iteration loop, so there is little to gain.");
+console.log("Fast's win is on factorisation‑dominated problems — see `npm run benchmark`.");
 process.exit(0);

@@ -284,12 +284,15 @@ the picture splits in two:
 loop dominates, and the dense 0‑indexed, goto‑free layout pulls ahead
 (`node benchmark/constraints.js`, `q = 2n` dense random):
 
-| n | iterations | Santini | solveQP | **solveQP is** |
-|---:|---:|---:|---:|---:|
-| 60 | 72 | 10.2 | 4.4 | **2.3× faster** |
-| 100 | 125 | 50.9 | 13.4 | **3.8× faster** |
-| 150 | 189 | 179 | 49 | **3.7× faster** |
-| 200 | 297 | 555 | 149 | **3.7× faster** |
+| n | iterations | Santini | solveQP | solveQPFast | **solveQP vs Santini** |
+|---:|---:|---:|---:|---:|---:|
+| 100 | 125 | 53.4 | 13.2 | 13.3 | **4.0× faster** |
+| 200 | 297 | 602 | 147 | 149 | **4.1× faster** |
+| 400 | 491 | 4423 | 1585 | 1617 | **2.8× faster** |
+
+Here `solveQPFast ≈ solveQP`: it parallelises only the factorisation, which is a
+minor part of a constraint‑heavy solve — the (sequential) iteration loop is the
+bottleneck. `solveQPFast` earns its keep in regime (b), below.
 
 **(b) Factorisation‑dominated problems** — few active constraints ⇒ ≈ 1
 iteration ⇒ the time is almost entirely the Cholesky and triangular inverse,
