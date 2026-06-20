@@ -32,19 +32,23 @@ const V1 = (a) => [0, ...a];
 const cM = (m) => m.map((r) => r.slice());
 const med = async (fn, reps) => { const t = []; for (let i = 0; i < reps; i++) { const a = now(); await fn(); t.push(now() - a); } t.sort((x, y) => x - y); return t[reps >> 1]; };
 
+// FEASIBLE constraint-heavy problem: box −1 ≤ xᵢ ≤ 1 (q = 2n bounds) with a large
+// linear term so the unconstrained minimum lands well outside the box → many
+// bounds active → many active-set iterations. Guaranteed feasible (the box is
+// non-empty), unlike random `Aᵀx ≥ b`, which over-constrains and can be empty —
+// on an infeasible problem every solver returns garbage, so it is useless here.
 function gen(n, seed) {
   s = seed;
   const B = Array.from({ length: n }, () => Array.from({ length: n }, () => rnd() * 2 - 1));
-  const D = Array.from({ length: n }, (_, i) => Array.from({ length: n }, (_, j) => { let x = 0; for (let k = 0; k < n; k++) x += B[i][k] * B[j][k]; return x + (i === j ? n : 0); }));
-  const q = 2 * n;
-  const d = Array.from({ length: n }, () => rnd() * 2 - 1);
-  const A = Array.from({ length: n }, () => Array.from({ length: q }, () => rnd() * 2 - 1));
-  const b = Array.from({ length: q }, () => rnd() * 2 - 1);
-  return { D, d, A, b };
+  const D = Array.from({ length: n }, (_, i) => Array.from({ length: n }, (_, j) => { let x = 0; for (let k = 0; k < n; k++) x += B[i][k] * B[j][k] / n; return x + (i === j ? 1 : 0); }));
+  const d = Array.from({ length: n }, () => (rnd() * 2 - 1) * 3);
+  const q = 2 * n, A = Array.from({ length: n }, () => new Array(q).fill(0));
+  for (let i = 0; i < n; i++) { A[i][i] = 1; A[i][n + i] = -1; }
+  return { D, d, A, b: new Array(q).fill(-1) };
 }
 
 console.log(`\nCPU: ${CPU}   Runtime: ${RUNTIME}`);
-console.log("Constraint‑heavy QP (q = 2n dense random) — median ms, lower is better\n");
+console.log("Constraint‑heavy QP (q = 2n box bounds, feasible) — median ms, lower is better\n");
 console.log("    n │   q  │ iters │  Santini    solveQP       Fast │  solveQP vs Santini");
 console.log("──────┼──────┼───────┼──────────────────────────────┼─────────────────────");
 for (const n of [60, 100, 200, 400]) {

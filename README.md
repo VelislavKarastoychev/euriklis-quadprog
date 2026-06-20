@@ -262,7 +262,17 @@ Fortran `qpgen2` — across **864 randomised problems** (square and rectangular,
 analytic edge cases (a single active bound, an equality‑constrained projection,
 a fully‑determined active set). Solutions and Lagrange multipliers agree to
 machine precision (`≈ 10⁻¹⁵`). `solveQPFast` is checked the same way for
-`n ∈ {512, 768, 1024}`.
+`n ∈ {512, 768, 1024}`, including feasible constraint‑heavy problems that run the
+active‑set loop hundreds of times through the parallel factorisation path. Run
+the suite with **`npm test`**.
+
+> Feasibility caveat — `solveQPFast`. On a **feasible** problem `solveQPFast`
+> equals `solveQP` to machine precision. On an **infeasible** one (no `x`
+> satisfies the constraints) there is no meaningful answer: every solver returns
+> a constraint‑violating point, and because the parallel and scalar
+> factorisations differ in their last bits, a long chaotic active‑set path can
+> drive those two garbage outputs apart. That is garbage‑in/garbage‑out, not a
+> disagreement on a real solution — check `min(Aᵀx − b) ≥ 0` if in doubt.
 
 > Note for users of earlier versions: the previous 0‑indexed port mistranslated
 > several packed‑storage offsets from the 1‑based Fortran (a sentinel collision
@@ -280,15 +290,15 @@ All numbers are on an **AMD Ryzen 9 4900HS (16 threads)**, Node v20.19 / Bun
 `O(n³)` factorisation but differ in the `O(n²)`‑per‑iteration active‑set loop, so
 the picture splits in two:
 
-**(a) Constraint‑heavy problems** — many inequalities ⇒ many iterations ⇒ the
-loop dominates, and the dense 0‑indexed, goto‑free layout pulls ahead
-(`node benchmark/constraints.js`, `q = 2n` dense random):
+**(a) Constraint‑heavy problems** — many active constraints ⇒ many iterations ⇒
+the loop dominates, and the dense 0‑indexed, goto‑free layout pulls ahead
+(`node benchmark/constraints.js`, feasible box `−1 ≤ x ≤ 1`, `q = 2n`):
 
 | n | iterations | Santini | solveQP | solveQPFast | **solveQP vs Santini** |
 |---:|---:|---:|---:|---:|---:|
-| 100 | 125 | 53.4 | 13.2 | 13.3 | **4.0× faster** |
-| 200 | 297 | 602 | 147 | 149 | **4.1× faster** |
-| 400 | 491 | 4423 | 1585 | 1617 | **2.8× faster** |
+| 100 | 54 | 17.6 | 6.4 | 6.1 | **2.8× faster** |
+| 200 | 112 | 179.5 | 61.2 | 58.7 | **2.9× faster** |
+| 400 | 241 | 2082 | 776 | 746 | **2.7× faster** |
 
 Here `solveQPFast ≈ solveQP`: it parallelises only the factorisation, which is a
 minor part of a constraint‑heavy solve — the (sequential) iteration loop is the
