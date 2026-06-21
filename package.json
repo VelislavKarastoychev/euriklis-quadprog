@@ -4,6 +4,10 @@
   "description": "A javascript implementation of the quadprog Fortran subroutine.",
   "main": "index.js",
   "type": "module",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
   "scripts": {
     "test": "node test/quadprog.test.js",
     "benchmark": "node benchmark/compare.js",
