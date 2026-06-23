@@ -342,4 +342,4 @@ from its use.
 
 ## Contact
 
-Questions, bugs, suggestions: `euriklis@hotmail.com`.
+Questions, bugs, suggestions: `vskarastoychev@gmail.com`.
