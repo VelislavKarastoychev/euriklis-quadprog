@@ -1,5 +1,9 @@
 # @euriklis/quadprog
 
+[![npm version](https://img.shields.io/npm/v/@euriklis/quadprog.svg)](https://www.npmjs.com/package/@euriklis/quadprog)
+[![npm downloads](https://img.shields.io/npm/dm/@euriklis/quadprog.svg)](https://www.npmjs.com/package/@euriklis/quadprog)
+[![license](https://img.shields.io/npm/l/@euriklis/quadprog.svg)](https://github.com/VelislavKarastoychev/euriklis-quadprog/blob/master/LICENSE)
+
 A small, dependency‑free **convex quadratic‑programming** solver for JavaScript
 (Node and Bun). It implements the **Goldfarb–Idnani dual active‑set method** and
 ships two entry points:
