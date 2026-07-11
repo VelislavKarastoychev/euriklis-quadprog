@@ -1,4 +1,5 @@
 "use strict";
+import type { Matrix, Vector, QPResult } from "./types.js";
 /**
  * @param {number[][]} a - matrix
  * with dimensions lda x n
@@ -21,7 +22,7 @@
  * We avoid these routines by implementing them in the
  * javascript.
  */
-const dpori = (a, n) => {
+const dpori = (a: Matrix, n: number): Matrix => {
   let i, j, k, kp1, t;
   // compute inverse(r)
   for (k = 0; k < n; k++) {
@@ -43,8 +44,8 @@ const dpori = (a, n) => {
   }
   return a;
 }
-const dpofa = (a) => {
-  let i, j, jm1, k, t, s, n, info = [];
+const dpofa = (a: Matrix): [Matrix, number | number[]] => {
+  let i, j, jm1, k, t, s, n, info: number | number[] = [];
   n = a.length;
   for (j = 0; j < n; j++) {
     info = j;
@@ -95,7 +96,7 @@ const dpofa = (a) => {
  * We avoid the ddot and daxpy methods of the fortran and change them
  * with the corresponded javascript implementations.
  */
-const dposl = (a, n, b) => {
+const dposl = (a: Matrix, n: number, b: Vector): [Matrix, Vector] => {
   let i, k, kb, t;
   for (k = 0; k < n; k++) {
     //~ t = ddot(k - 1, a[1][k], 1, b[1], 1);
@@ -129,15 +130,15 @@ const dposl = (a, n, b) => {
  * quadratic form.
  */
 const solutionQP = (
-  error_index,
-  solution,
-  value,
-  unconstrained_solution,
-  iterations,
-  iact,
-  nact,
-  lagr,
-) => {
+  error_index: number,
+  solution: Vector,
+  value: number,
+  unconstrained_solution: Vector,
+  iterations: [number, number],
+  iact: Vector,
+  nact: number,
+  lagr: Vector,
+): QPResult => {
   let message = "";
   if (error_index === 1) message = "Constraints are inconsistent. No solution.";
   if (error_index === 2) {
@@ -241,7 +242,16 @@ const solutionQP = (
  * - If the matrix D is not symmetric, then set it to the
  * matrix D := 1/2 (D + D^T) and then inside it in the subroutine.
  */
-export const qpgen2 = (dmat, dvec, n, amat, bvec, q, meq, ierr = 0) => {
+export const qpgen2 = (
+  dmat: Matrix,
+  dvec: Vector,
+  n: number,
+  amat: Matrix,
+  bvec: Vector,
+  q: number,
+  meq: number,
+  ierr = 0,
+): QPResult => {
   /**
    * @param {number} fddmat - an integer,
    * the leading dimension of the matrix dmat.
@@ -279,11 +289,11 @@ export const qpgen2 = (dmat, dvec, n, amat, bvec, q, meq, ierr = 0) => {
     r,
     state = 1;
   // integer arrays:
-  let iact = [], iter = [];
+  let iact: number[] = [], iter: number[] = [];
   // floating point parameters:
   let crval, gc, gs, nu, sum, t1, temp, tmpa, tmpb, tt, vsmall;
   // floating point arrays:
-  let lagr = [], sol = [], work = [];
+  let lagr: number[] = [], sol: number[] = [], work: number[] = [];
   // logical variables:
   let t1inf, t2min;
   // utility functions:
@@ -366,7 +376,7 @@ export const qpgen2 = (dmat, dvec, n, amat, bvec, q, meq, ierr = 0) => {
     [dmat, info] = dpofa(dmat);
     if (info !== 0) {
       ierr = 2;
-      return solutionQP(ierr, sol, crval, dvec, iter, iact, nact, lagr);
+      return solutionQP(ierr, sol, crval, dvec, iter as [number, number], iact, nact, lagr);
     }
     [dmat, dvec] = dposl(dmat, n, dvec);
     dmat = dpori(dmat, n);
@@ -842,7 +852,7 @@ export const qpgen2 = (dmat, dvec, n, amat, bvec, q, meq, ierr = 0) => {
       state = 2;
     }
   } while (1);
-  return solutionQP(ierr, sol, crval, dvec, iter, iact, nact, lagr);
+  return solutionQP(ierr, sol, crval, dvec, iter as [number, number], iact, nact, lagr);
 }
 /**
  *
@@ -892,7 +902,14 @@ export const qpgen2 = (dmat, dvec, n, amat, bvec, q, meq, ierr = 0) => {
  * If the matrix D is not symmetric, then set it to the
  * matrix D := 1/2 (D + D^T) and then inside it in the subroutine.
  */
-export const quadprog = (D, d, A, b, meq = 0, ierr = 0) => {
+export const quadprog = (
+  D: Matrix,
+  d: Vector,
+  A: Matrix,
+  b: Vector,
+  meq = 0,
+  ierr = 0,
+): QPResult => {
   // D is n×n (SPD); A is n×q — COLUMN i is the normal of constraint i, so q is
   // the number of COLUMNS (A[0].length), not A.length. (The previous wrapper read
   // q = A.length and copied A as q×n, which only happens to agree with qpgen2's

@@ -12,10 +12,11 @@ import { gemm } from "./pool.js";
 
 const NB = 128; // block width — also the scalar base case for the triangular inverse
 
-export const sabF64 = (len) => new Float64Array(new SharedArrayBuffer(len * 8));
+export const sabF64 = (len: number): Float64Array =>
+  new Float64Array(new SharedArrayBuffer(len * 8));
 
 /** Scalar Cholesky of the b×b lower diagonal block at (jb,jb) in a stride-n matrix. */
-const cholDiag = (A, jb, b, n) => {
+const cholDiag = (A: Float64Array, jb: number, b: number, n: number): void => {
   for (let j = 0; j < b; j++) {
     const dj = jb + j;
     let d = A[dj * n + dj];
@@ -33,7 +34,7 @@ const cholDiag = (A, jb, b, n) => {
 };
 
 /** Scalar TRSM of the m×b panel below the diagonal block: L21 = A21·L11⁻ᵀ. */
-const trsmPanel = (A, jb, b, n, m) => {
+const trsmPanel = (A: Float64Array, jb: number, b: number, n: number, m: number): void => {
   for (let ii = 0; ii < m; ii++) {
     const i = jb + b + ii;
     for (let j = 0; j < b; j++) {
@@ -50,7 +51,7 @@ const trsmPanel = (A, jb, b, n, m) => {
  * SAB) becomes L with A = L·Lᵀ. The trailing update A22 −= L21·L21ᵀ is the only
  * Θ(n³) term and runs on the parallel matmul (syrk via transB, α=−1, β=1).
  */
-export const choleskyLower = async (A, n) => {
+export const choleskyLower = async (A: Float64Array, n: number): Promise<void> => {
   for (let jb = 0; jb < n; jb += NB) {
     const b = Math.min(NB, n - jb);
     cholDiag(A, jb, b, n);
@@ -71,7 +72,7 @@ export const choleskyLower = async (A, n) => {
 };
 
 /** Scalar upper-triangular inverse (LINPACK dpori), flat stride-n, IN PLACE. */
-const dporiFlat = (a, n) => {
+const dporiFlat = (a: Float64Array, n: number): void => {
   for (let k = 0; k < n; k++) {
     a[k * n + k] = 1.0 / a[k * n + k];
     const t = -a[k * n + k];
@@ -92,7 +93,7 @@ const dporiFlat = (a, n) => {
  * diagonal blocks invert recursively (scalar at the base); the coupling term is
  * two parallel matmuls.
  */
-export const triInvUpper = async (R, n) => {
+export const triInvUpper = async (R: Float64Array, n: number): Promise<void> => {
   if (n <= NB) { dporiFlat(R, n); return; }
   const k = n >> 1, m = n - k;
   const A = sabF64(k * k), B = sabF64(k * m), C = sabF64(m * m);
@@ -115,7 +116,7 @@ export const triInvUpper = async (R, n) => {
 };
 
 /** Solve D·x = d for SPD D given its lower Cholesky L (D = L·Lᵀ), flat stride-n. */
-export const cholSolve = (L, d, n) => {
+export const cholSolve = (L: Float64Array, d: ArrayLike<number>, n: number): Float64Array => {
   const y = new Float64Array(n);
   for (let i = 0; i < n; i++) {            // forward: L·y = d
     let s = d[i];

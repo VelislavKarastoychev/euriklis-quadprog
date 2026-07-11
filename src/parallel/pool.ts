@@ -16,9 +16,9 @@ const POOL = Math.max(1, (os.cpus()?.length || 4) - 2);
 // run inline on the main thread instead. Mirrors the Tensor library's threshold.
 const PARALLEL_FLOPS = 1 << 21; // ~2.1M
 
-let workers = null;
+let workers: Worker[] | null = null;
 
-const ensure = () => {
+const ensure = (): Worker[] => {
   if (workers) return workers;
   const url = new URL("./worker.js", import.meta.url);
   workers = [];
@@ -31,7 +31,18 @@ const ensure = () => {
 };
 
 /** Inline fallback: C = beta·C + alpha · A·(B or Bᵀ), rows [r0,r1). */
-const inlineGemm = (A, B, C, N, K, r0, r1, transB, alpha, beta) => {
+const inlineGemm = (
+  A: Float64Array,
+  B: Float64Array,
+  C: Float64Array,
+  N: number,
+  K: number,
+  r0: number,
+  r1: number,
+  transB: boolean,
+  alpha: number,
+  beta: number,
+): void => {
   if (transB) {
     for (let i = r0; i < r1; i++) {
       const ai = i * K, ci = i * N;
@@ -58,7 +69,15 @@ const inlineGemm = (A, B, C, N, K, r0, r1, transB, alpha, beta) => {
  * (raw buffers, not views). Splits the M rows across the pool; small products run
  * inline. Resolves when C is fully written.
  */
-export const gemm = async (aSab, bSab, cSab, M, N, K, opts = {}) => {
+export const gemm = async (
+  aSab: ArrayBufferLike,
+  bSab: ArrayBufferLike,
+  cSab: ArrayBufferLike,
+  M: number,
+  N: number,
+  K: number,
+  opts: { transB?: boolean; alpha?: number; beta?: number } = {},
+): Promise<void> => {
   const { transB = false, alpha = 1, beta = 0 } = opts;
   if (2 * M * N * K < PARALLEL_FLOPS) {
     inlineGemm(new Float64Array(aSab), new Float64Array(bSab), new Float64Array(cSab), N, K, 0, M, transB, alpha, beta);
@@ -66,7 +85,7 @@ export const gemm = async (aSab, bSab, cSab, M, N, K, opts = {}) => {
   }
   const ws = ensure();
   const chunk = Math.ceil(M / ws.length);
-  const tasks = [];
+  const tasks: Promise<unknown>[] = [];
   for (let w = 0; w < ws.length; w++) {
     const r0 = w * chunk, r1 = Math.min(M, r0 + chunk);
     if (r0 >= r1) break;
