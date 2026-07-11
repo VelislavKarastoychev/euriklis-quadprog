@@ -4,13 +4,13 @@
  * All three solvers on CONSTRAINT‑HEAVY problems (q = 2n dense random
  * inequalities). These take many active‑set iterations, so the per‑iteration
  * cost dominates — which is exactly where this package's dense, goto‑free inner
- * loop pulls ahead of Santini's reference. (On factorisation‑dominated problems
+ * loop pulls ahead of Santini's reference. (On factorization‑dominated problems
  * — few active constraints — the two are on par; see benchmark.js.)
  *
- * solveQPFast parallelises only the O(n³) start‑up, NOT the iteration loop. In
+ * solveQPFast parallelizes only the O(n³) start‑up, NOT the iteration loop. In
  * this regime the loop is the bottleneck, so Fast gives essentially no benefit
  * here — and below n=512 it simply calls solveQP. Its win is on
- * factorisation‑dominated problems (benchmark.js / compare.js).
+ * factorization‑dominated problems (benchmark.js / compare.js).
  *
  *   node benchmark/constraints.js   (or:  bun …)
  */
@@ -63,7 +63,7 @@ for (const n of [60, 100, 200, 400]) {
   const f = (v) => v.toFixed(1).padStart(10);
   console.log(`${String(n).padStart(5)} │${String(2 * n).padStart(5)} │${String(iters).padStart(6)} │${f(sant)}${f(mine)}${f(fast)} │  ${((sant / mine).toFixed(2) + "× faster").padStart(13)}`);
 }
-console.log("\nFast ≈ solveQP here: it parallelises the factorisation, but a constraint‑heavy");
+console.log("\nFast ≈ solveQP here: it parallelizes the factorization, but a constraint‑heavy");
 console.log("solve is dominated by the (sequential) iteration loop, so there is little to gain.");
-console.log("Fast's win is on factorisation‑dominated problems — see `npm run benchmark`.");
+console.log("Fast's win is on factorization‑dominated problems — see `npm run benchmark`.");
 // The solveQPFast worker pool is `unref`'d, so the process exits on its own.

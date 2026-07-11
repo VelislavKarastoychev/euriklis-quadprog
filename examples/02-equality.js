@@ -3,7 +3,7 @@
 /**
  * Equality‑constrained QP — the leading `meq` constraints are equalities.
  *
- *   minimise  ½‖x‖²     s.t.  x₁ + x₂ = 1
+ *   minimize  ½‖x‖²     s.t.  x₁ + x₂ = 1
  *
  * The closed‑form answer is the projection of the origin onto the line, [½, ½].
  *

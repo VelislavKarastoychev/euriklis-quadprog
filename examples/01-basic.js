@@ -3,7 +3,7 @@
 /**
  * Basic inequality‑constrained QP.
  *
- *   minimise  ½‖x‖² − dᵀx     s.t.  Aᵀx ≥ b
+ *   minimize  ½‖x‖² − dᵀx     s.t.  Aᵀx ≥ b
  *
  * Run:  node examples/01-basic.js   (or:  bun examples/01-basic.js)
  */

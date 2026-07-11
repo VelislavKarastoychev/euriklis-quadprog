@@ -17,15 +17,15 @@ export type Matrix = number[][];
 /**
  * Result of {@link solveQP} / {@link solveQPFast}.
  *
- * The Goldfarb–Idnani dual active-set method minimises
+ * The Goldfarb–Idnani dual active-set method minimizes
  * `½·xᵀD·x − dᵀx` subject to `A₁ᵀx = b₁` (equalities) and `A₂ᵀx ≥ b₂`.
  */
 export type QPResult = {
-  /** The optimiser `x` (`n×1`). */
+  /** The optimizer `x` (`n×1`). */
   solution: Vector;
   /** The objective value at the optimum. */
   value: number;
-  /** The unconstrained optimiser `D⁻¹d` (`n×1`). */
+  /** The unconstrained optimizer `D⁻¹d` (`n×1`). */
   unconstrained_solution: Vector;
   /**
    * Iteration counters: `[main iterations, constraints dropped after becoming

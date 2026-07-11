@@ -1,7 +1,7 @@
 # Two ideas behind the solver, in plain language
 
 The [README's algorithm section](../README.md#the-algorithm) leans on two terms
-that are standard in optimisation but easy to meet for the first time here: the
+that are standard in optimization but easy to meet for the first time here: the
 **active set** and the **dual problem**. This page explains both with pictures
 and intuition rather than theorems. If you can picture a bowl and a fence, you
 already have everything you need.
@@ -48,7 +48,7 @@ move. The collection of walls that are touched at the optimum is the
 
 Here is the punchline that the algorithm is built on:
 
-> **If you already knew `𝒜`, the problem would be easy.** Minimising the bowl
+> **If you already knew `𝒜`, the problem would be easy.** Minimizing the bowl
 > subject to the touched walls *as equalities* (`aᵢᵀx = bᵢ` for `i ∈ 𝒜`) is a
 > plain linear‑algebra solve — no inequalities left.
 
@@ -60,7 +60,7 @@ dropping a wall when it turns out not to be needed — until the guess is correc
 ### A tiny example
 
 ```
-minimise  ½(x² + y²)      (bowl centred at the origin)
+minimize  ½(x² + y²)      (bowl centered at the origin)
 subject to  x + y ≥ 2     (one wall)
 ```
 
@@ -74,7 +74,7 @@ point of the line `x + y = 2`, which is `(1, 1)`. There the single constraint is
 
 ## The dual problem
 
-Every minimisation problem — call it the **primal** — has a shadow twin called
+Every minimization problem — call it the **primal** — has a shadow twin called
 the **dual**, and the two meet at the same optimal value. The bridge between them
 is the idea of a **price** on each constraint.
 
@@ -89,12 +89,12 @@ push past that wall. Bundle the objective and the fines into one function, the
 L(x, λ) = ½xᵀDx − dᵀx  −  Σ λᵢ (aᵢᵀx − bᵢ).
 ```
 
-- The **primal** view: *pick `x`* to minimise the cost while obeying every wall.
+- The **primal** view: *pick `x`* to minimize the cost while obeying every wall.
 - The **dual** view: *pick the prices `λ ≥ 0`* and ask how cheap the (now
   unconstrained) Lagrangian can be made — then choose the prices that make that
   cheapest‑case as **expensive** as possible.
 
-So the primal minimises over points; the dual maximises over prices.
+So the primal minimizes over points; the dual maximizes over prices.
 
 ### Why the two are the same answer here
 

@@ -3,7 +3,7 @@
 /**
  * Long‑only minimum‑variance portfolio (a classic constrained QP).
  *
- *   minimise  ½ wᵀ Σ w        (portfolio variance)
+ *   minimize  ½ wᵀ Σ w        (portfolio variance)
  *   subject to  Σ wᵢ = 1      (budget — fully invested)        ← equality
  *               wᵢ ≥ 0        (no short selling)               ← inequalities
  *

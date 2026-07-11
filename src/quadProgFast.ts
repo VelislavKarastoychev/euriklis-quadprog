@@ -6,7 +6,7 @@
  * the scalar LINPACK routines. The active-set iteration itself is inherently
  * sequential and shared verbatim with `solveQP` (so both give identical results).
  *
- * The parallel factorisation only pays off once D is large enough to amortise the
+ * The parallel factorization only pays off once D is large enough to amortise the
  * worker dispatch (≈ n ≥ 512). Below FAST_MIN_N this transparently calls the
  * scalar `solveQP` — there is never a reason to prefer the workers for small D.
  *
@@ -40,7 +40,7 @@ export const solveQPFast = async (
   for (let i = 0; i < n; i++) for (let j = i; j < n; j++) R[i * n + j] = Df[j * n + i]; // R = Lᵀ
   await triInvUpper(R, n);                                  // R ← J = R⁻¹
 
-  // J as a 2-D array (upper triangle) for qpgen2's pre-factorised path (ierr=1):
+  // J as a 2-D array (upper triangle) for qpgen2's pre-factorized path (ierr=1):
   // it derives x₀ = D⁻¹d from J and d itself (two O(n²) triangular products).
   const J = new Array(n);
   for (let i = 0; i < n; i++) {

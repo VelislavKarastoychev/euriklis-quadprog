@@ -5,14 +5,14 @@
  *
  * The core safety invariant is `solveQPFast === solveQP` to machine precision on
  * FEASIBLE problems (including large constraint‑heavy ones that exercise the
- * parallel factorisation path); `solveQP` itself is cross‑checked against the
+ * parallel factorization path); `solveQP` itself is cross‑checked against the
  * reference `quadprog` (Santini) where that dev‑dependency is present.
  *
  * NOTE: tests use only FEASIBLE problems on purpose. Random `Aᵀx ≥ b` with many
  * dense constraints can be infeasible; on an infeasible problem every solver
  * returns a meaningless (constraint‑violating) point, and the chaotic active‑set
  * path then amplifies the tiny difference between the parallel and scalar
- * factorisations — that is garbage‑in/garbage‑out, not a solver disagreement.
+ * factorizations — that is garbage‑in/garbage‑out, not a solver disagreement.
  */
 import assert from "node:assert/strict";
 import { solveQP, solveQPFast, shutdown } from "../dist/index.js";
@@ -37,7 +37,7 @@ function spd(n, sd) {
   const B = Array.from({ length: n }, () => Array.from({ length: n }, () => rnd() * 2 - 1));
   return Array.from({ length: n }, (_, i) => Array.from({ length: n }, (_, j) => { let x = 0; for (let k = 0; k < n; k++) x += B[i][k] * B[j][k] / n; return x + (i === j ? 1 : 0); }));
 }
-/** Lower bounds xᵢ ≥ −1 (q = n). Few constraints bind → factorisation‑dominated. */
+/** Lower bounds xᵢ ≥ −1 (q = n). Few constraints bind → factorization‑dominated. */
 function boxLower(n, sd) {
   const D = spd(n, sd), d = Array.from({ length: n }, () => rnd() * 2 - 1);
   const A = Array.from({ length: n }, (_, i) => Array.from({ length: n }, (_, j) => (i === j ? 1 : 0)));
@@ -83,7 +83,7 @@ await test("solveQP — equality constraint (x+y = 1)", () => {
 
 // ── 2. solveQPFast === solveQP on FEASIBLE problems (the safety invariant) ────
 for (const [name, mk, sizes] of [
-  ["box lower-bounds (factorisation-dominated)", boxLower, [50, 200, 512]],
+  ["box lower-bounds (factorization-dominated)", boxLower, [50, 200, 512]],
   ["box both-sides (constraint-heavy, feasible)", boxBoth, [100, 300, 512]],
 ]) {
   for (const n of sizes) {

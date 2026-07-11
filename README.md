@@ -13,7 +13,7 @@ out of the box. It implements the **Goldfarb–Idnani dual active‑set method**
 ships two entry points:
 
 - `solveQP`  — the pure‑scalar solver. Zero dependencies, deterministic, fast.
-- `solveQPFast` — the same algorithm, but the cubic matrix factorisation in the
+- `solveQPFast` — the same algorithm, but the cubic matrix factorization in the
   start‑up phase runs on a `SharedArrayBuffer` worker pool. Pays off for large
   dense problems (`n ≳ 512`); below that it transparently calls `solveQP`.
 
@@ -22,12 +22,12 @@ Both return **bit‑for‑bit identical** results.
 It solves
 
 ```
-minimise    ½ xᵀ D x − dᵀ x          x ∈ ℝⁿ
+minimize    ½ xᵀ D x − dᵀ x          x ∈ ℝⁿ
 subject to  A₁ᵀ x  =  b₁             (the first  meq  constraints)
             A₂ᵀ x  ≥  b₂             (the remaining ones)
 ```
 
-with `D` symmetric positive‑definite. This covers portfolio optimisation with
+with `D` symmetric positive‑definite. This covers portfolio optimization with
 constraints, constrained least squares, the dual problem of **support‑vector
 machines**, and RBF networks, among many others.
 
@@ -48,7 +48,7 @@ npm install @euriklis/quadprog@latest --save
 ```js
 import { solveQP } from "@euriklis/quadprog";
 
-// minimise ½‖x‖² − dᵀx  s.t.  the three inequalities Aᵀx ≥ b
+// minimize ½‖x‖² − dᵀx  s.t.  the three inequalities Aᵀx ≥ b
 const D = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
 const d = [0, 5, 0];
 const A = [[-4, 2, 0], [-3, 1, -2], [0, 0, 1]];
@@ -74,9 +74,9 @@ const r = await solveQPFast(D, d, A, b);   // n < 512 → delegates to solveQP
 
 | field | meaning |
 |---|---|
-| `solution` | the minimiser `x*` (length `n`) |
+| `solution` | the minimizer `x*` (length `n`) |
 | `value` | the objective `½x*ᵀDx* − dᵀx*` |
-| `unconstrained_solution` | `D⁻¹d`, the minimiser ignoring all constraints |
+| `unconstrained_solution` | `D⁻¹d`, the minimizer ignoring all constraints |
 | `Lagrangian multipliers` | one per constraint, `0` if inactive |
 | `active constraints` / `count of active constraints` | which constraints bind at `x*` |
 | `iterations` | `[main iterations, constraints dropped]` |
@@ -139,7 +139,7 @@ to WebAssembly). They solve different regimes — pick by problem shape:
 - **Dense `D`, exact answer, no build step** → this package. Same algorithm as the
   reference, but modern (ESM + types + 0‑indexed), validated value‑for‑value
   against it across 864 randomised problems, with an optional parallel
-  factorisation for large `n`.
+  factorization for large `n`.
 - **Very large, sparse constraint matrices** → `osqp`. A first‑order method with
   sparse linear algebra scales past what a dense active‑set solver targets (at the
   cost of an approximate, tolerance‑controlled solution and a WASM dependency).
@@ -151,7 +151,7 @@ to WebAssembly). They solve different regimes — pick by problem shape:
 ## The algorithm
 
 This section explains *why* the method works. It assumes you are comfortable
-with positive‑definite matrices, the Cholesky factorisation, QR / Givens
+with positive‑definite matrices, the Cholesky factorization, QR / Givens
 rotations, and Lagrange multipliers.
 
 > New to the **[active set](./docs/concepts.md#the-active-set)** or the **[dual
@@ -197,7 +197,7 @@ Because the problem is convex, these conditions are not just necessary but
 **sufficient**. So the whole job is: find the set of constraints that are tight
 at the optimum — the **[active set](./docs/concepts.md#the-active-set)** `𝒜` — together with multipliers `λ ≥ 0`
 that balance the gradient. Once `𝒜` is known the solution is pure linear
-algebra: minimise `f` subject to `aᵢᵀx = bᵢ` for `i ∈ 𝒜`.
+algebra: minimize `f` subject to `aᵢᵀx = bᵢ` for `i ∈ 𝒜`.
 
 ### 3. Two ways to search, and why the *dual* one is used
 
@@ -229,12 +229,12 @@ Then `D⁻¹ = J Jᵀ` and, crucially, `Jᵀ D J = I`: the columns of `J` form a
 turns the awkward `D`‑weighted geometry into ordinary Euclidean geometry.
 
 While the algorithm runs it maintains, for the current active set of size `k`,
-a QR‑type factorisation of the **active constraint normals**
+a QR‑type factorization of the **active constraint normals**
 `N = [ a_{𝒜(1)} , … , a_{𝒜(k)} ]` expressed in the `J`‑basis. Split the
 transformed basis as `J = (Q₁ | Q₂)`, where the first `k` columns `Q₁` span the
 active normals and the remaining `Q₂` span the directions still free to move.
 Adding or dropping a constraint is then **one sweep of Givens rotations** that
-re‑triangularises this factor in `O(n²)`, instead of refactorising from scratch
+re‑triangularises this factor in `O(n²)`, instead of refactorizing from scratch
 in `O(n³)`.
 
 ### 5. One iteration
@@ -263,14 +263,14 @@ Let `x` be the current point with active set `𝒜` and multipliers `u ≥ 0`.
    - `t₂` (**primal**) — the distance along `z` until constraint `p` becomes
      exactly tight, `t₂ = −(aₚᵀx − bₚ) / (zᵀ aₚ)`.
    - `t₁` (**dual**) — the largest step before some active multiplier would turn
-     negative, `t₁ = min_{ i : rᵢ > 0 } uᵢ / rᵢ`. The minimiser `it₁` is the
+     negative, `t₁ = min_{ i : rᵢ > 0 } uᵢ / rᵢ`. The minimizer `it₁` is the
      constraint that would be driven infeasible in the dual.
 
 4. **Take the step.**
 
    - **Full step** (`t₂ ≤ t₁`, and finite): move `x ← x + t₂ z`, update the
      multipliers, and **add** `p` to the active set (a Givens *update* of the
-     factorisation). The active set grew by one; go to 1.
+     factorization). The active set grew by one; go to 1.
    - **Partial step** (`t₁ < t₂`): we cannot reach tightness yet — the blocking
      constraint `it₁` must leave first. Update `u ← u − t₁ r`, **drop** `it₁`
      (a Givens *down‑date*), and recompute the direction for the same `p`.
@@ -284,14 +284,14 @@ Let `x` be the current point with active set `𝒜` and multipliers `u ≥ 0`.
 When the loop ends, the active multipliers are read off from `u`, every inactive
 constraint gets `λ = 0`, and `x` is returned as `x*`.
 
-### 6. Cost, and what `solveQPFast` parallelises
+### 6. Cost, and what `solveQPFast` parallelizes
 
 Per iteration the work is `O(n²)` (the Givens sweeps and matrix–vector
 products); there are typically `O(n + q)` iterations. The **one‑off start‑up**,
 however, is `O(n³)`: the Cholesky `D = RᵀR` and the triangular inverse `J = R⁻¹`.
 
 The active‑set loop is inherently sequential, but that start‑up is not.
-`solveQPFast` keeps the identical loop and only accelerates the factorisation:
+`solveQPFast` keeps the identical loop and only accelerates the factorization:
 
 - a **blocked Cholesky** whose trailing‑matrix update `A₂₂ ← A₂₂ − L₂₁L₂₁ᵀ` is a
   matrix multiply, and
@@ -321,14 +321,14 @@ analytic edge cases (a single active bound, an equality‑constrained projection
 a fully‑determined active set). Solutions and Lagrange multipliers agree to
 machine precision (`≈ 10⁻¹⁵`). `solveQPFast` is checked the same way for
 `n ∈ {512, 768, 1024}`, including feasible constraint‑heavy problems that run the
-active‑set loop hundreds of times through the parallel factorisation path. Run
+active‑set loop hundreds of times through the parallel factorization path. Run
 the suite with **`npm test`**.
 
 > Feasibility caveat — `solveQPFast`. On a **feasible** problem `solveQPFast`
 > equals `solveQP` to machine precision. On an **infeasible** one (no `x`
 > satisfies the constraints) there is no meaningful answer: every solver returns
 > a constraint‑violating point, and because the parallel and scalar
-> factorisations differ in their last bits, a long chaotic active‑set path can
+> factorizations differ in their last bits, a long chaotic active‑set path can
 > drive those two garbage outputs apart. That is garbage‑in/garbage‑out, not a
 > disagreement on a real solution — check `min(Aᵀx − b) ≥ 0` if in doubt.
 
@@ -345,7 +345,7 @@ All numbers are on an **AMD Ryzen 9 4900HS (16 threads)**, Node v20.19 / Bun
 1.2.23, median ms; reproduce with the scripts in [`benchmark/`](./benchmark).
 
 **How `solveQP` compares to Santini depends on the problem.** Both share the same
-`O(n³)` factorisation but differ in the `O(n²)`‑per‑iteration active‑set loop, so
+`O(n³)` factorization but differ in the `O(n²)`‑per‑iteration active‑set loop, so
 the picture splits in two:
 
 **(a) Constraint‑heavy problems** — many active constraints ⇒ many iterations ⇒
@@ -358,11 +358,11 @@ the loop dominates, and the dense 0‑indexed, goto‑free layout pulls ahead
 | 200 | 112 | 179.5 | 61.2 | 58.7 | **2.9× faster** |
 | 400 | 241 | 2082 | 776 | 746 | **2.7× faster** |
 
-Here `solveQPFast ≈ solveQP`: it parallelises only the factorisation, which is a
+Here `solveQPFast ≈ solveQP`: it parallelizes only the factorization, which is a
 minor part of a constraint‑heavy solve — the (sequential) iteration loop is the
 bottleneck. `solveQPFast` earns its keep in regime (b), below.
 
-**(b) Factorisation‑dominated problems** — few active constraints ⇒ ≈ 1
+**(b) Factorization‑dominated problems** — few active constraints ⇒ ≈ 1
 iteration ⇒ the time is almost entirely the Cholesky and triangular inverse,
 which is the *same* work in both, so the two are **on par**
 (`node benchmark/benchmark.js`, `n` box constraints):
@@ -374,7 +374,7 @@ which is the *same* work in both, so the two are **on par**
 | 800 | 507 | 412 |
 | 1024 | 1178 | 1116 |
 
-Regime (b) is exactly where **`solveQPFast`** helps: it runs that factorisation
+Regime (b) is exactly where **`solveQPFast`** helps: it runs that factorization
 on the worker pool. Same box problems, `solveQPFast` vs `solveQP` (identical
 results; below `n = 512` it just calls `solveQP`, hence ≈ 1× there):
 
