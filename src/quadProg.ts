@@ -139,9 +139,10 @@ const solutionQP = (
   nact: number,
   lagr: Vector,
 ): QPResult => {
-  let message = "";
-  if (error_index === 1) message = "Constraints are inconsistent. No solution.";
-  if (error_index === 2) {
+  let message: string;
+  if (error_index === 1) {
+    message = "Constraints are inconsistent. No solution.";
+  } else if (error_index === 2) {
     message =
       "The matrix A of the quadratic form 0.5 * x^t * A * x + b * x is not positive definite.";
   } else message = "No problems";
@@ -150,6 +151,7 @@ const solutionQP = (
     value,
     unconstrained_solution,
     iterations,
+    ierr: error_index as 0 | 1 | 2,
     message,
     "active constraints": iact,
     "count of active constraints": nact,

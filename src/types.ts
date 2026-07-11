@@ -32,6 +32,16 @@ export type QPResult = {
    * active]`.
    */
   iterations: [number, number];
+  /**
+   * Exit code — the machine-readable companion to {@link message}:
+   * - `0` — success.
+   * - `1` — the constraints are inconsistent (the problem is infeasible);
+   *   `solution` does not satisfy them.
+   * - `2` — `D` is not positive definite; `solution` is meaningless.
+   *
+   * Prefer branching on this over string-matching `message`.
+   */
+  ierr: 0 | 1 | 2;
   /** Human-readable status. `"No problems"` on success. */
   message: string;
   /** Indices of the constraints active at the optimum. */
