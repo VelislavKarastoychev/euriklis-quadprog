@@ -11,7 +11,23 @@
  */
 import { parentPort } from "worker_threads";
 
-parentPort.on("message", (m) => {
+type GemmMessage = {
+  aSab: ArrayBufferLike;
+  bSab: ArrayBufferLike;
+  cSab: ArrayBufferLike;
+  N: number;
+  K: number;
+  r0: number;
+  r1: number;
+  transB: boolean;
+  alpha: number;
+  beta: number;
+};
+
+if (!parentPort) throw new Error("worker.ts must be run as a worker thread");
+const port = parentPort;
+
+port.on("message", (m: GemmMessage) => {
   const { aSab, bSab, cSab, N, K, r0, r1, transB, alpha, beta } = m;
   const A = new Float64Array(aSab), B = new Float64Array(bSab), C = new Float64Array(cSab);
   if (transB) {
@@ -33,5 +49,5 @@ parentPort.on("message", (m) => {
       }
     }
   }
-  parentPort.postMessage(1);
+  port.postMessage(1);
 });

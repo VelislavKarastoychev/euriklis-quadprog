@@ -15,7 +15,7 @@
  * factorisations — that is garbage‑in/garbage‑out, not a solver disagreement.
  */
 import assert from "node:assert/strict";
-import { solveQP, solveQPFast } from "../index.js";
+import { solveQP, solveQPFast, shutdown } from "../dist/index.js";
 
 let santini = null;
 try { const m = await import("quadprog"); santini = m.solveQP ?? m.default?.solveQP ?? m.default ?? null; } catch { /* optional */ }
@@ -51,6 +51,17 @@ function boxBoth(n, sd) {
   for (let i = 0; i < n; i++) { A[i][i] = 1; A[i][n + i] = -1; }
   return { D, d, A, b: new Array(q).fill(-1), q };
 }
+/** Non-square problem (q = n+1): one equality Σxᵢ = 0 (meq = 1) plus n lower
+ *  bounds xᵢ ≥ −1. `A` is n×(n+1), which is the case the q = A[0].length fix
+ *  guards — a wrong q = A.length would mis-shape amat and silently corrupt it. */
+function eqBox(n, sd) {
+  const D = spd(n, sd), d = Array.from({ length: n }, () => rnd() * 2 - 1);
+  const q = n + 1, A = Array.from({ length: n }, () => new Array(q).fill(0));
+  for (let i = 0; i < n; i++) { A[i][0] = 1; A[i][1 + i] = 1; }
+  const b = new Array(q).fill(-1); b[0] = 0;
+  return { D, d, A, b, q, meq: 1 };
+}
+const objective = (D, d, x, n) => { let xDx = 0, dx = 0; for (let i = 0; i < n; i++) { dx += d[i] * x[i]; for (let j = 0; j < n; j++) xDx += x[i] * D[i][j] * x[j]; } return 0.5 * xDx - dx; };
 const M1 = (r) => { const m = [[]]; r.forEach((x, i) => (m[i + 1] = [0, ...x])); return m; };
 const V1 = (a) => [0, ...a];
 const minFeas = (A, b, x, n, q) => { let m = 0; for (let i = 0; i < q; i++) { let ax = 0; for (let j = 0; j < n; j++) ax += A[j][i] * x[j]; m = Math.min(m, ax - b[i]); } return m; };
@@ -102,6 +113,49 @@ if (santini) {
 } else {
   results.push("  skip Santini cross-check (dev-dependency `quadprog` not installed)");
 }
+
+// ── 4. result-field & error-path correctness ────────────────────────────────
+await test("value = ½xᵀDx − dᵀx at the optimum", () => {
+  const p = eqBox(40, 5);
+  const r = solveQP(p.D, p.d, p.A, p.b, p.meq);
+  assert.ok(Math.abs(r.value - objective(p.D, p.d, r.solution, 40)) < 1e-9,
+    `value ${r.value} != objective ${objective(p.D, p.d, r.solution, 40)}`);
+});
+await test("unconstrained_solution solves D·x = d", () => {
+  const p = boxLower(30, 9);
+  const u = solveQP(p.D, p.d, p.A, p.b).unconstrained_solution;
+  let m = 0;                       // ‖D·u − d‖∞ must be ~0
+  for (let i = 0; i < 30; i++) { let s = 0; for (let j = 0; j < 30; j++) s += p.D[i][j] * u[j]; m = Math.max(m, Math.abs(s - p.d[i])); }
+  assert.ok(m < 1e-9, `‖D·uncon − d‖∞ = ${m.toExponential(2)}`);
+});
+await test("non-SPD D reports 'not positive definite'", () => {
+  const r = solveQP([[1, 0], [0, -1]], [0, 0], [[1], [0]], [0]);   // indefinite D
+  assert.match(r.message, /not positive definite/);
+});
+await test("shutdown() is exported and idempotent", () => {
+  assert.equal(typeof shutdown, "function");
+  shutdown(); shutdown();          // safe to call with or without a live pool
+});
+
+// ── 5. non-square A and mixed equality/inequality (the q = A[0].length case) ──
+if (santini) {
+  for (const n of [40, 80]) {
+    await test(`solveQP === Santini — non-square A, mixed eq/ineq, n=${n}`, () => {
+      const p = eqBox(n, 13);
+      const mine = solveQP(p.D, p.d, p.A, p.b, p.meq).solution;
+      const ref = santini(M1(p.D), V1(p.d), M1(p.A), V1(p.b), p.meq).solution.slice(1);
+      const d = maxDiff(mine, ref, n);
+      assert.ok(d < 1e-6, `max |Δx| vs Santini = ${d.toExponential(2)}`);
+    });
+  }
+}
+await test("solveQPFast === solveQP — with an equality constraint, n=512", async () => {
+  const p = eqBox(512, 21);
+  const sq = solveQP(p.D, p.d, p.A, p.b, p.meq);
+  const fa = await solveQPFast(p.D, p.d, p.A, p.b, p.meq);
+  const d = maxDiff(fa.solution, sq.solution, 512);
+  assert.ok(d < 1e-9, `max |Δx| = ${d.toExponential(2)} exceeds 1e-9`);
+});
 
 // ── report ───────────────────────────────────────────────────────────────────
 console.log(results.join("\n"));

@@ -1,11 +1,15 @@
 # @euriklis/quadprog
 
+[![CI](https://github.com/VelislavKarastoychev/euriklis-quadprog/actions/workflows/ci.yml/badge.svg)](https://github.com/VelislavKarastoychev/euriklis-quadprog/actions/workflows/ci.yml)
 [![npm version](https://img.shields.io/npm/v/@euriklis/quadprog.svg)](https://www.npmjs.com/package/@euriklis/quadprog)
 [![npm downloads](https://img.shields.io/npm/dm/@euriklis/quadprog.svg)](https://www.npmjs.com/package/@euriklis/quadprog)
+[![types](https://img.shields.io/npm/types/@euriklis/quadprog.svg)](https://www.npmjs.com/package/@euriklis/quadprog)
 [![license](https://img.shields.io/npm/l/@euriklis/quadprog.svg)](https://github.com/VelislavKarastoychev/euriklis-quadprog/blob/master/LICENSE)
 
 A small, dependency‑free **convex quadratic‑programming** solver for JavaScript
-(Node and Bun). It implements the **Goldfarb–Idnani dual active‑set method** and
+and TypeScript (Node and Bun). Written in TypeScript, it ships type declarations
+(`.d.ts`) — so `solveQP`, `solveQPFast`, and the `QPResult` shape are fully typed
+out of the box. It implements the **Goldfarb–Idnani dual active‑set method** and
 ships two entry points:
 
 - `solveQP`  — the pure‑scalar solver. Zero dependencies, deterministic, fast.
@@ -253,6 +257,11 @@ The active‑set loop is inherently sequential, but that start‑up is not.
 with every matrix multiply dispatched across a `SharedArrayBuffer` worker pool.
 Below `n = 512` the dispatch overhead is not worth it and `solveQPFast` simply
 calls `solveQP`.
+
+The pool's workers are `unref`'d, so they never keep the process alive — a script
+that awaits `solveQPFast` exits on its own once it finishes; **no `process.exit`
+is needed.** A long‑running host that wants to release the threads eagerly can
+`import { shutdown } from "@euriklis/quadprog"` and call `shutdown()`.
 
 ---
 

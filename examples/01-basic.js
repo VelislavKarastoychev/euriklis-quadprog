@@ -7,7 +7,7 @@
  *
  * Run:  node examples/01-basic.js   (or:  bun examples/01-basic.js)
  */
-import { solveQP } from "../index.js";
+import { solveQP } from "../dist/index.js";
 
 const D = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];    // ½‖x‖²
 const d = [0, 5, 0];

@@ -9,7 +9,7 @@
  *
  * Run:  node examples/02-equality.js
  */
-import { solveQP } from "../index.js";
+import { solveQP } from "../dist/index.js";
 
 const D = [[1, 0], [0, 1]];
 const d = [0, 0];
