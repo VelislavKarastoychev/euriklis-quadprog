@@ -14,7 +14,7 @@
  *
  * Run:  node examples/03-portfolio.js
  */
-import { solveQP } from "../index.js";
+import { solveQP } from "../dist/index.js";
 
 // covariance matrix Σ of 4 assets (symmetric positive‑definite)
 const Sigma = [

@@ -15,7 +15,7 @@
  *   node benchmark/constraints.js   (or:  bun …)
  */
 import os from "os";
-import { solveQP, solveQPFast } from "../index.js";
+import { solveQP, solveQPFast } from "../dist/index.js";
 
 let santini = null;
 try { const m = await import("quadprog"); santini = m.solveQP ?? m.default?.solveQP ?? m.default ?? null; } catch {}
@@ -66,4 +66,4 @@ for (const n of [60, 100, 200, 400]) {
 console.log("\nFast ≈ solveQP here: it parallelises the factorisation, but a constraint‑heavy");
 console.log("solve is dominated by the (sequential) iteration loop, so there is little to gain.");
 console.log("Fast's win is on factorisation‑dominated problems — see `npm run benchmark`.");
-process.exit(0);
+// The solveQPFast worker pool is `unref`'d, so the process exits on its own.

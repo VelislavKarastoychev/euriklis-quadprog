@@ -1,15 +1,40 @@
 {
   "name": "@euriklis/quadprog",
-  "version": "1.2.2",
-  "description": "A javascript implementation of the quadprog Fortran subroutine.",
-  "main": "index.js",
+  "version": "2.0.0",
+  "description": "A TypeScript implementation of the quadprog (Goldfarb-Idnani) quadratic programming solver, with an optional parallel factorisation.",
   "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "sideEffects": false,
   "publishConfig": {
     "registry": "https://registry.npmjs.org",
     "access": "public"
   },
   "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.build.json",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run build",
+    "pretest": "npm run build",
     "test": "node test/quadprog.test.js",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "prebenchmark": "npm run build",
     "benchmark": "node benchmark/compare.js",
     "benchmark:node": "node benchmark/benchmark.js",
     "benchmark:bun": "bun benchmark/benchmark.js",
@@ -44,6 +69,8 @@
   },
   "homepage": "https://github.com/VelislavKarastoychev/euriklis-quadprog#readme",
   "devDependencies": {
-    "quadprog": "^1.6.1"
+    "@types/node": "^20.19.43",
+    "quadprog": "^1.6.1",
+    "typescript": "^5.9.3"
   }
 }

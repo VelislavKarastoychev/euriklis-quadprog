@@ -16,7 +16,7 @@
  *   node benchmark/benchmark.js --json   # machine‑readable (used by compare.js)
  */
 import os from "os";
-import { solveQP, solveQPFast } from "../index.js";
+import { solveQP, solveQPFast } from "../dist/index.js";
 
 // Santini's `quadprog` is an optional devDependency — skip gracefully if absent.
 let santini = null;
@@ -88,5 +88,4 @@ if (process.argv.includes("--json")) {
   }
   console.log("\n(times are median ms; lower is better)");
 }
-
-process.exit(0);
+// The solveQPFast worker pool is `unref`'d, so the process exits on its own.
