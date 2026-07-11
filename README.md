@@ -113,6 +113,41 @@ node examples/03-portfolio.js
 
 ---
 
+## How it compares
+
+The two established options on npm for QP in JavaScript are Alberto Santini's
+[`quadprog`](https://www.npmjs.com/package/quadprog) (the long‑standing 1‑indexed
+port of the same Goldfarb–Idnani Fortran) and
+[`osqp`](https://www.npmjs.com/package/osqp) (the OSQP first‑order solver compiled
+to WebAssembly). They solve different regimes — pick by problem shape:
+
+| | **@euriklis/quadprog** | `quadprog` (Santini) | `osqp` (WASM) |
+|---|---|---|---|
+| Method | dual active‑set (Goldfarb–Idnani) | dual active‑set (same) | first‑order (ADMM) |
+| Best for | small–medium **dense** QP, exact | small dense QP | **large sparse** QP |
+| Accuracy | machine‑precision (direct) | machine‑precision (direct) | tolerance‑based, needs tuning |
+| Language / types | **TypeScript, ships `.d.ts`** | JS, no types | has types (WASM bindings) |
+| Module | **ESM** (Node + Bun) | CommonJS | ESM + WASM |
+| API indexing | **0‑indexed** (idiomatic JS) | 1‑indexed (arrays padded) | matrix triplets |
+| Runtime deps | **none** | none | WASM binary + async init |
+| Parallel start‑up | **`solveQPFast`** (worker pool) | — | — (single WASM thread) |
+| Infeasibility | flagged via `ierr` | flagged via `ierr` | flagged via status |
+| License | MIT | MIT | Apache‑2.0 |
+
+**Which should you use?**
+
+- **Dense `D`, exact answer, no build step** → this package. Same algorithm as the
+  reference, but modern (ESM + types + 0‑indexed), validated value‑for‑value
+  against it across 864 randomised problems, with an optional parallel
+  factorisation for large `n`.
+- **Very large, sparse constraint matrices** → `osqp`. A first‑order method with
+  sparse linear algebra scales past what a dense active‑set solver targets (at the
+  cost of an approximate, tolerance‑controlled solution and a WASM dependency).
+- **Already on Santini's `quadprog` and happy** → this is a drop‑in with the same
+  results; you gain types, ESM, 0‑indexing, and `solveQPFast`.
+
+---
+
 ## The algorithm
 
 This section explains *why* the method works. It assumes you are comfortable
