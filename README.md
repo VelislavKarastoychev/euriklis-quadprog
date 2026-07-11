@@ -1,5 +1,6 @@
 # @euriklis/quadprog
 
+[![CI](https://github.com/VelislavKarastoychev/euriklis-quadprog/actions/workflows/ci.yml/badge.svg)](https://github.com/VelislavKarastoychev/euriklis-quadprog/actions/workflows/ci.yml)
 [![npm version](https://img.shields.io/npm/v/@euriklis/quadprog.svg)](https://www.npmjs.com/package/@euriklis/quadprog)
 [![npm downloads](https://img.shields.io/npm/dm/@euriklis/quadprog.svg)](https://www.npmjs.com/package/@euriklis/quadprog)
 [![types](https://img.shields.io/npm/types/@euriklis/quadprog.svg)](https://www.npmjs.com/package/@euriklis/quadprog)
