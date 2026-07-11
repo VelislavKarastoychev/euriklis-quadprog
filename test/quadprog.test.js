@@ -128,9 +128,28 @@ await test("unconstrained_solution solves D·x = d", () => {
   for (let i = 0; i < 30; i++) { let s = 0; for (let j = 0; j < 30; j++) s += p.D[i][j] * u[j]; m = Math.max(m, Math.abs(s - p.d[i])); }
   assert.ok(m < 1e-9, `‖D·uncon − d‖∞ = ${m.toExponential(2)}`);
 });
-await test("non-SPD D reports 'not positive definite'", () => {
+await test("non-SPD D reports ierr=2 / 'not positive definite'", () => {
   const r = solveQP([[1, 0], [0, -1]], [0, 0], [[1], [0]], [0]);   // indefinite D
+  assert.equal(r.ierr, 2);
   assert.match(r.message, /not positive definite/);
+});
+await test("feasible problem reports ierr=0", () => {
+  const r = solveQP([[1]], [0], [[1]], [1]);                       // x ≥ 1
+  assert.equal(r.ierr, 0);
+  assert.equal(r.message, "No problems");
+});
+// Infeasible problems must be flagged (ierr=1), not silently returned as solved.
+// The reference `quadprog` sets ierr=1 on exactly these; a broken message chain
+// once masked it as "No problems".
+await test("infeasible: conflicting equalities x=1 ∧ x=2 → ierr=1", () => {
+  const r = solveQP([[1]], [0], [[1, 1]], [1, 2], 2);
+  assert.equal(r.ierr, 1);
+  assert.match(r.message, /inconsistent/i);
+});
+await test("infeasible: conflicting inequalities x≥1 ∧ x≤−1 → ierr=1", () => {
+  const r = solveQP([[1]], [0], [[1, -1]], [1, 1]);
+  assert.equal(r.ierr, 1);
+  assert.match(r.message, /inconsistent/i);
 });
 await test("shutdown() is exported and idempotent", () => {
   assert.equal(typeof shutdown, "function");
