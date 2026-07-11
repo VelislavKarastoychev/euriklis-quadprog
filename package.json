@@ -44,6 +44,10 @@
     "url": "git+https://github.com/VelislavKarastoychev/euriklis-quadprog.git"
   },
   "keywords": [
+    "typescript",
+    "typescript-quadprog",
+    "quadprog-typescript",
+    "qp-solver",
     "quadprog",
     "solveQP",
     "solveQPFast",

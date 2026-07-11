@@ -6,6 +6,9 @@
 [![types](https://img.shields.io/npm/types/@euriklis/quadprog.svg)](https://www.npmjs.com/package/@euriklis/quadprog)
 [![license](https://img.shields.io/npm/l/@euriklis/quadprog.svg)](https://github.com/VelislavKarastoychev/euriklis-quadprog/blob/master/LICENSE)
 
+> **quadprog in TypeScript** — a typed, dependency‑free **quadratic‑programming**
+> (Goldfarb–Idnani) solver for Node and Bun.
+
 A small, dependency‑free **convex quadratic‑programming** solver for JavaScript
 and TypeScript (Node and Bun). Written in TypeScript, it ships type declarations
 (`.d.ts`) — so `solveQP`, `solveQPFast`, and the `QPResult` shape are fully typed
