@@ -14,10 +14,17 @@
  */
 import { quadprog as solveQP, qpgen2 } from "./quadProg.js";
 import { sabF64, choleskyLower, triInvUpper } from "./parallel/linalg.js";
+import type { Matrix, Vector, QPResult } from "./types.js";
 
 const FAST_MIN_N = 512;
 
-export const solveQPFast = async (D, d, A, b, meq = 0) => {
+export const solveQPFast = async (
+  D: Matrix,
+  d: Vector,
+  A: Matrix,
+  b: Vector,
+  meq = 0,
+): Promise<QPResult> => {
   const n = D.length;
   if (n < FAST_MIN_N) return solveQP(D, d, A, b, meq);     // scalar wins; no dispatch
   const q = A[0].length;

@@ -7,7 +7,7 @@
  *
  * Run:  node examples/04-fast-large.js   (or:  bun examples/04-fast-large.js)
  */
-import { solveQP, solveQPFast } from "../index.js";
+import { solveQP, solveQPFast } from "../dist/index.js";
 
 const n = 700;
 
@@ -44,4 +44,6 @@ console.log(`solveQP     : ${(t2 - t1).toFixed(1)} ms`);
 console.log(`speed‑up    : ${((t2 - t1) / (t1 - t0)).toFixed(2)}×`);
 console.log(`max |Δx|    : ${maxDiff.toExponential(2)} (identical up to rounding)`);
 
-process.exit(0); // release the worker pool
+// No teardown needed: the worker pool is `unref`'d, so the process exits on its
+// own once this script finishes. Call `shutdown()` only if you want to release
+// the threads eagerly in a long-running host.
