@@ -80,7 +80,17 @@ const r = await solveQPFast(D, d, A, b);   // n < 512 → delegates to solveQP
 | `Lagrangian multipliers` | one per constraint, `0` if inactive |
 | `active constraints` / `count of active constraints` | which constraints bind at `x*` |
 | `iterations` | `[main iterations, constraints dropped]` |
-| `message` | `"No problems"`, or why it stopped |
+| `ierr` | exit code: `0` success, `1` infeasible (inconsistent constraints), `2` `D` not positive‑definite |
+| `message` | human‑readable form of `ierr` |
+
+> **Check `ierr` before trusting `solution`.** On an infeasible problem
+> (`ierr === 1`) or a non‑SPD `D` (`ierr === 2`) the returned `solution` does not
+> solve the program. Branch on the numeric `ierr` rather than matching `message`.
+
+```js
+const r = solveQP(D, d, A, b);
+if (r.ierr !== 0) throw new Error(r.message);
+```
 
 ## Examples
 
